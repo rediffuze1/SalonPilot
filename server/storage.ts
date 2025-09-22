@@ -1,0 +1,295 @@
+import {
+  users,
+  salons,
+  services,
+  stylists,
+  clients,
+  appointments,
+  salonHours,
+  stylistSchedule,
+  type User,
+  type UpsertUser,
+  type Salon,
+  type InsertSalon,
+  type Service,
+  type InsertService,
+  type Stylist,
+  type InsertStylist,
+  type Client,
+  type InsertClient,
+  type Appointment,
+  type InsertAppointment,
+  type SalonHours,
+  type StylistSchedule,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
+
+export interface IStorage {
+  // User operations (mandatory for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Salon operations
+  getSalonByUserId(userId: string): Promise<Salon | undefined>;
+  createSalon(salon: InsertSalon): Promise<Salon>;
+  updateSalon(id: string, salon: Partial<InsertSalon>): Promise<Salon>;
+  
+  // Service operations
+  getServicesBySalonId(salonId: string): Promise<Service[]>;
+  getService(id: string): Promise<Service | undefined>;
+  createService(service: InsertService): Promise<Service>;
+  updateService(id: string, service: Partial<InsertService>): Promise<Service>;
+  deleteService(id: string): Promise<void>;
+  
+  // Stylist operations
+  getStylistsBySalonId(salonId: string): Promise<Stylist[]>;
+  getStylist(id: string): Promise<Stylist | undefined>;
+  createStylist(stylist: InsertStylist): Promise<Stylist>;
+  updateStylist(id: string, stylist: Partial<InsertStylist>): Promise<Stylist>;
+  deleteStylist(id: string): Promise<void>;
+  
+  // Client operations
+  getClients(): Promise<Client[]>;
+  getClient(id: string): Promise<Client | undefined>;
+  getClientByEmail(email: string): Promise<Client | undefined>;
+  createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: string, client: Partial<InsertClient>): Promise<Client>;
+  
+  // Appointment operations
+  getAppointmentsBySalonId(salonId: string, startDate?: Date, endDate?: Date): Promise<Appointment[]>;
+  getAppointment(id: string): Promise<Appointment | undefined>;
+  createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment>;
+  deleteAppointment(id: string): Promise<void>;
+  getAppointmentsByStylistId(stylistId: string, startDate?: Date, endDate?: Date): Promise<Appointment[]>;
+  
+  // Availability checking
+  checkStylistAvailability(stylistId: string, startTime: Date, endTime: Date): Promise<boolean>;
+  getAvailableSlots(salonId: string, stylistId: string, date: Date, serviceDuration: number): Promise<Date[]>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // User operations (mandatory for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // Salon operations
+  async getSalonByUserId(userId: string): Promise<Salon | undefined> {
+    const [salon] = await db.select().from(salons).where(eq(salons.userId, userId));
+    return salon;
+  }
+
+  async createSalon(salon: InsertSalon): Promise<Salon> {
+    const [newSalon] = await db.insert(salons).values(salon).returning();
+    return newSalon;
+  }
+
+  async updateSalon(id: string, salon: Partial<InsertSalon>): Promise<Salon> {
+    const [updatedSalon] = await db
+      .update(salons)
+      .set({ ...salon, updatedAt: new Date() })
+      .where(eq(salons.id, id))
+      .returning();
+    return updatedSalon;
+  }
+
+  // Service operations
+  async getServicesBySalonId(salonId: string): Promise<Service[]> {
+    return await db.select().from(services).where(eq(services.salonId, salonId)).orderBy(asc(services.name));
+  }
+
+  async getService(id: string): Promise<Service | undefined> {
+    const [service] = await db.select().from(services).where(eq(services.id, id));
+    return service;
+  }
+
+  async createService(service: InsertService): Promise<Service> {
+    const [newService] = await db.insert(services).values(service).returning();
+    return newService;
+  }
+
+  async updateService(id: string, service: Partial<InsertService>): Promise<Service> {
+    const [updatedService] = await db
+      .update(services)
+      .set({ ...service, updatedAt: new Date() })
+      .where(eq(services.id, id))
+      .returning();
+    return updatedService;
+  }
+
+  async deleteService(id: string): Promise<void> {
+    await db.delete(services).where(eq(services.id, id));
+  }
+
+  // Stylist operations
+  async getStylistsBySalonId(salonId: string): Promise<Stylist[]> {
+    return await db.select().from(stylists).where(eq(stylists.salonId, salonId)).orderBy(asc(stylists.firstName));
+  }
+
+  async getStylist(id: string): Promise<Stylist | undefined> {
+    const [stylist] = await db.select().from(stylists).where(eq(stylists.id, id));
+    return stylist;
+  }
+
+  async createStylist(stylist: InsertStylist): Promise<Stylist> {
+    const [newStylist] = await db.insert(stylists).values(stylist).returning();
+    return newStylist;
+  }
+
+  async updateStylist(id: string, stylist: Partial<InsertStylist>): Promise<Stylist> {
+    const [updatedStylist] = await db
+      .update(stylists)
+      .set({ ...stylist, updatedAt: new Date() })
+      .where(eq(stylists.id, id))
+      .returning();
+    return updatedStylist;
+  }
+
+  async deleteStylist(id: string): Promise<void> {
+    await db.delete(stylists).where(eq(stylists.id, id));
+  }
+
+  // Client operations
+  async getClients(): Promise<Client[]> {
+    return await db.select().from(clients).orderBy(asc(clients.firstName));
+  }
+
+  async getClient(id: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client;
+  }
+
+  async getClientByEmail(email: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.email, email));
+    return client;
+  }
+
+  async createClient(client: InsertClient): Promise<Client> {
+    const [newClient] = await db.insert(clients).values(client).returning();
+    return newClient;
+  }
+
+  async updateClient(id: string, client: Partial<InsertClient>): Promise<Client> {
+    const [updatedClient] = await db
+      .update(clients)
+      .set({ ...client, updatedAt: new Date() })
+      .where(eq(clients.id, id))
+      .returning();
+    return updatedClient;
+  }
+
+  // Appointment operations
+  async getAppointmentsBySalonId(salonId: string, startDate?: Date, endDate?: Date): Promise<Appointment[]> {
+    if (startDate && endDate) {
+      return await db.select().from(appointments).where(
+        and(
+          eq(appointments.salonId, salonId),
+          gte(appointments.startTime, startDate),
+          lte(appointments.startTime, endDate)
+        )
+      ).orderBy(asc(appointments.startTime));
+    }
+    
+    return await db.select().from(appointments).where(eq(appointments.salonId, salonId)).orderBy(asc(appointments.startTime));
+  }
+
+  async getAppointment(id: string): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+    return appointment;
+  }
+
+  async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
+    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
+    return newAppointment;
+  }
+
+  async updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment> {
+    const [updatedAppointment] = await db
+      .update(appointments)
+      .set({ ...appointment, updatedAt: new Date() })
+      .where(eq(appointments.id, id))
+      .returning();
+    return updatedAppointment;
+  }
+
+  async deleteAppointment(id: string): Promise<void> {
+    await db.delete(appointments).where(eq(appointments.id, id));
+  }
+
+  async getAppointmentsByStylistId(stylistId: string, startDate?: Date, endDate?: Date): Promise<Appointment[]> {
+    if (startDate && endDate) {
+      return await db.select().from(appointments).where(
+        and(
+          eq(appointments.stylistId, stylistId),
+          gte(appointments.startTime, startDate),
+          lte(appointments.startTime, endDate)
+        )
+      ).orderBy(asc(appointments.startTime));
+    }
+    
+    return await db.select().from(appointments).where(eq(appointments.stylistId, stylistId)).orderBy(asc(appointments.startTime));
+  }
+
+  // Availability checking
+  async checkStylistAvailability(stylistId: string, startTime: Date, endTime: Date): Promise<boolean> {
+    const conflictingAppointments = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.stylistId, stylistId),
+          gte(appointments.endTime, startTime),
+          lte(appointments.startTime, endTime)
+        )
+      );
+    
+    return conflictingAppointments.length === 0;
+  }
+
+  async getAvailableSlots(salonId: string, stylistId: string, date: Date, serviceDuration: number): Promise<Date[]> {
+    // This is a simplified implementation
+    // In a real app, you'd consider salon hours, stylist schedule, existing appointments, buffers, etc.
+    const startOfDay = new Date(date);
+    startOfDay.setHours(9, 0, 0, 0); // 9 AM
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(18, 0, 0, 0); // 6 PM
+    
+    const slots: Date[] = [];
+    const slotInterval = 30; // 30-minute intervals
+    
+    for (let time = new Date(startOfDay); time < endOfDay; time.setMinutes(time.getMinutes() + slotInterval)) {
+      const slotEnd = new Date(time);
+      slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration);
+      
+      if (slotEnd <= endOfDay) {
+        const isAvailable = await this.checkStylistAvailability(stylistId, new Date(time), slotEnd);
+        if (isAvailable) {
+          slots.push(new Date(time));
+        }
+      }
+    }
+    
+    return slots;
+  }
+}
+
+export const storage = new DatabaseStorage();
