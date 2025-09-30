@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLocation } from "wouter";
 import { 
   Calendar, 
   Clock, 
@@ -25,6 +26,7 @@ import Navigation from "@/components/navigation";
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -125,6 +127,7 @@ export default function Dashboard() {
                 variant="outline" 
                 className="btn-secondary px-4 py-2 text-sm font-medium"
                 data-testid="button-new-service"
+                onClick={() => setLocation("/services")}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau service
@@ -133,6 +136,7 @@ export default function Dashboard() {
                 variant="outline" 
                 className="btn-secondary px-4 py-2 text-sm font-medium"
                 data-testid="button-add-stylist"
+                onClick={() => setLocation("/stylists")}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Ajouter styliste
@@ -140,6 +144,7 @@ export default function Dashboard() {
               <Button 
                 className="btn-primary px-4 py-2 text-white text-sm font-medium"
                 data-testid="button-ai-assistant"
+                onClick={() => setLocation("/voice")}
               >
                 <Bot className="mr-2 h-4 w-4" />
                 Assistant IA
@@ -235,6 +240,7 @@ export default function Dashboard() {
                   variant="outline" 
                   className="btn-secondary p-4 h-auto flex flex-col items-start text-left hover:bg-white/80"
                   data-testid="button-quick-calendar"
+                  onClick={() => setLocation("/calendar")}
                 >
                   <CalendarDays className="h-6 w-6 text-primary mb-2" />
                   <div className="font-medium text-foreground">Calendrier</div>
@@ -243,6 +249,7 @@ export default function Dashboard() {
                   variant="outline" 
                   className="btn-secondary p-4 h-auto flex flex-col items-start text-left hover:bg-white/80"
                   data-testid="button-quick-clients"
+                  onClick={() => setLocation("/clients")}
                 >
                   <Users className="h-6 w-6 text-primary mb-2" />
                   <div className="font-medium text-foreground">Clients</div>
@@ -251,6 +258,7 @@ export default function Dashboard() {
                   variant="outline" 
                   className="btn-secondary p-4 h-auto flex flex-col items-start text-left hover:bg-white/80"
                   data-testid="button-quick-services"
+                  onClick={() => setLocation("/services")}
                 >
                   <Scissors className="h-6 w-6 text-primary mb-2" />
                   <div className="font-medium text-foreground">Services</div>
@@ -259,6 +267,12 @@ export default function Dashboard() {
                   variant="outline" 
                   className="btn-secondary p-4 h-auto flex flex-col items-start text-left hover:bg-white/80"
                   data-testid="button-quick-reports"
+                  onClick={() => {
+                    toast({
+                      title: "Bientôt disponible",
+                      description: "La page de rapports sera disponible prochainement.",
+                    });
+                  }}
                 >
                   <BarChart className="h-6 w-6 text-primary mb-2" />
                   <div className="font-medium text-foreground">Rapports</div>

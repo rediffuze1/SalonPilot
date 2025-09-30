@@ -34,6 +34,7 @@ function Router() {
           <Route path="/stylists" component={Stylists} />
           <Route path="/calendar" component={Calendar} />
           <Route path="/clients" component={Clients} />
+          <Route path="/voice" component={Voice} />
         </>
       )}
       <Route component={NotFound} />
