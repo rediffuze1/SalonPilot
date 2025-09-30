@@ -20,7 +20,7 @@ import { insertServiceSchema, type Service } from "@shared/schema";
 import { z } from "zod";
 import Navigation from "@/components/navigation";
 
-const serviceFormSchema = insertServiceSchema.extend({
+const serviceFormSchema = insertServiceSchema.omit({ salonId: true }).extend({
   tags: z.array(z.string()).default([]),
 });
 
@@ -327,8 +327,9 @@ export default function Services() {
                             <Input 
                               type="number" 
                               placeholder="45" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
                               data-testid="input-service-duration"
                             />
                           </FormControl>
@@ -347,8 +348,9 @@ export default function Services() {
                             <Input 
                               type="number" 
                               placeholder="15" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
                               data-testid="input-service-buffer-before"
                             />
                           </FormControl>
@@ -367,8 +369,9 @@ export default function Services() {
                             <Input 
                               type="number" 
                               placeholder="15" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
                               data-testid="input-service-buffer-after"
                             />
                           </FormControl>

@@ -10,15 +10,55 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Plus, Edit, Mail, Phone, Search, Calendar, User } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Users,
+  Plus,
+  Edit,
+  Mail,
+  Phone,
+  Search,
+  Calendar,
+  User,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertClientSchema, type Client, type Stylist, type Appointment } from "@shared/schema";
+import {
+  insertClientSchema,
+  type Client,
+  type Stylist,
+  type Appointment,
+} from "@shared/schema";
 import { z } from "zod";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -33,7 +73,7 @@ export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-  
+
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -122,7 +162,13 @@ export default function Clients() {
   });
 
   const updateClientMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ClientFormData> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<ClientFormData>;
+    }) => {
       const response = await apiRequest("PUT", `/api/clients/${id}`, data);
       return response.json();
     },
@@ -175,29 +221,43 @@ export default function Clients() {
   };
 
   const onSubmit = (data: ClientFormData) => {
+    const cleanedData = {
+      ...data,
+      preferredStylistId:
+        !data.preferredStylistId || data.preferredStylistId === "none"
+          ? null
+          : data.preferredStylistId,
+    };
+
     if (editingClient) {
-      updateClientMutation.mutate({ id: editingClient.id, data });
+      updateClientMutation.mutate({ id: editingClient.id, data: cleanedData });
     } else {
-      createClientMutation.mutate(data);
+      createClientMutation.mutate(cleanedData);
     }
   };
 
-  const filteredClients = clients?.filter((client: Client) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      client.firstName.toLowerCase().includes(searchLower) ||
-      client.lastName.toLowerCase().includes(searchLower) ||
-      client.email.toLowerCase().includes(searchLower) ||
-      (client.phone && client.phone.toLowerCase().includes(searchLower))
-    );
-  }) || [];
+  const filteredClients =
+    clients?.filter((client: Client) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        client.firstName.toLowerCase().includes(searchLower) ||
+        client.lastName.toLowerCase().includes(searchLower) ||
+        client.email.toLowerCase().includes(searchLower) ||
+        (client.phone && client.phone.toLowerCase().includes(searchLower))
+      );
+    }) || [];
 
   const getClientAppointments = (clientId: string) => {
-    return appointments?.filter((appointment: Appointment) => 
-      appointment.clientId === clientId
-    ).sort((a: Appointment, b: Appointment) => 
-      new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    ) || [];
+    return (
+      appointments
+        ?.filter(
+          (appointment: Appointment) => appointment.clientId === clientId,
+        )
+        .sort(
+          (a: Appointment, b: Appointment) =>
+            new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+        ) || []
+    );
   };
 
   const getPreferredStylistName = (stylistId?: string) => {
@@ -221,7 +281,7 @@ export default function Clients() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 space-y-4 lg:space-y-0">
           <div>
@@ -231,10 +291,10 @@ export default function Clients() {
             </h1>
             <p className="text-muted-foreground">Gérez votre base clients</p>
           </div>
-          
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 className="btn-primary px-6 py-3 text-white font-medium"
                 onClick={() => {
                   setEditingClient(null);
@@ -252,9 +312,12 @@ export default function Clients() {
                   {editingClient ? "Modifier le client" : "Ajouter un client"}
                 </DialogTitle>
               </DialogHeader>
-              
+
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -263,13 +326,17 @@ export default function Clients() {
                         <FormItem>
                           <FormLabel>Prénom</FormLabel>
                           <FormControl>
-                            <Input placeholder="Marie" {...field} data-testid="input-client-firstname" />
+                            <Input
+                              placeholder="Marie"
+                              {...field}
+                              data-testid="input-client-firstname"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="lastName"
@@ -277,7 +344,11 @@ export default function Clients() {
                         <FormItem>
                           <FormLabel>Nom</FormLabel>
                           <FormControl>
-                            <Input placeholder="Dubois" {...field} data-testid="input-client-lastname" />
+                            <Input
+                              placeholder="Dubois"
+                              {...field}
+                              data-testid="input-client-lastname"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -293,13 +364,18 @@ export default function Clients() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="marie@example.com" {...field} data-testid="input-client-email" />
+                            <Input
+                              type="email"
+                              placeholder="marie@example.com"
+                              {...field}
+                              data-testid="input-client-email"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="phone"
@@ -307,7 +383,11 @@ export default function Clients() {
                         <FormItem>
                           <FormLabel>Téléphone</FormLabel>
                           <FormControl>
-                            <Input placeholder="06 12 34 56 78" {...field} data-testid="input-client-phone" />
+                            <Input
+                              placeholder="06 12 34 56 78"
+                              {...field}
+                              data-testid="input-client-phone"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -321,14 +401,19 @@ export default function Clients() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Styliste préféré (optionnel)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-preferred-stylist">
                               <SelectValue placeholder="Choisir un styliste" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Aucune préférence</SelectItem>
+                            <SelectItem value="none">
+                              Aucune préférence
+                            </SelectItem>
                             {stylists?.map((stylist: Stylist) => (
                               <SelectItem key={stylist.id} value={stylist.id}>
                                 {stylist.firstName} {stylist.lastName}
@@ -348,9 +433,9 @@ export default function Clients() {
                       <FormItem>
                         <FormLabel>Notes</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Notes sur le client..." 
-                            {...field} 
+                          <Textarea
+                            placeholder="Notes sur le client..."
+                            {...field}
                             data-testid="input-client-notes"
                           />
                         </FormControl>
@@ -360,20 +445,26 @@ export default function Clients() {
                   />
 
                   <div className="flex justify-end space-x-3">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => setIsDialogOpen(false)}
                       data-testid="button-cancel-client"
                     >
                       Annuler
                     </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={createClientMutation.isPending || updateClientMutation.isPending}
+                    <Button
+                      type="submit"
+                      disabled={
+                        createClientMutation.isPending ||
+                        updateClientMutation.isPending
+                      }
                       data-testid="button-save-client"
                     >
-                      {createClientMutation.isPending || updateClientMutation.isPending ? "Enregistrement..." : "Enregistrer"}
+                      {createClientMutation.isPending ||
+                      updateClientMutation.isPending
+                        ? "Enregistrement..."
+                        : "Enregistrer"}
                     </Button>
                   </div>
                 </form>
@@ -412,7 +503,9 @@ export default function Clients() {
                     {searchTerm ? "Aucun client trouvé" : "Aucun client"}
                   </h3>
                   <p className="text-muted-foreground">
-                    {searchTerm ? "Aucun client ne correspond à votre recherche." : "Ajoutez votre premier client pour commencer."}
+                    {searchTerm
+                      ? "Aucun client ne correspond à votre recherche."
+                      : "Ajoutez votre premier client pour commencer."}
                   </p>
                 </div>
               ) : (
@@ -428,16 +521,19 @@ export default function Clients() {
                   </TableHeader>
                   <TableBody>
                     {filteredClients.map((client: Client) => {
-                      const clientAppointments = getClientAppointments(client.id);
+                      const clientAppointments = getClientAppointments(
+                        client.id,
+                      );
                       const lastAppointment = clientAppointments[0];
-                      
+
                       return (
                         <TableRow key={client.id}>
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <Avatar className="h-8 w-8">
                                 <AvatarFallback>
-                                  {client.firstName[0]}{client.lastName[0]}
+                                  {client.firstName[0]}
+                                  {client.lastName[0]}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
@@ -467,32 +563,42 @@ export default function Clients() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {getPreferredStylistName(client.preferredStylistId) || (
-                              <span className="text-muted-foreground">Aucune préférence</span>
+                            {getPreferredStylistName(
+                              client.preferredStylistId,
+                            ) || (
+                              <span className="text-muted-foreground">
+                                Aucune préférence
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
                             {lastAppointment ? (
                               <div className="text-sm">
-                                {format(parseISO(lastAppointment.startTime), "d MMM yyyy", { locale: fr })}
+                                {format(
+                                  parseISO(lastAppointment.startTime),
+                                  "d MMM yyyy",
+                                  { locale: fr },
+                                )}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground">Jamais</span>
+                              <span className="text-muted-foreground">
+                                Jamais
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleViewDetails(client)}
                                 data-testid={`button-view-client-${client.id}`}
                               >
                                 <User className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleEdit(client)}
                                 data-testid={`button-edit-client-${client.id}`}
                               >
@@ -511,18 +617,22 @@ export default function Clients() {
         )}
 
         {/* Client Details Dialog */}
-        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <Dialog
+          open={isDetailsDialogOpen}
+          onOpenChange={setIsDetailsDialogOpen}
+        >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Détails du client</DialogTitle>
             </DialogHeader>
-            
+
             {selectedClient && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-16 w-16">
                     <AvatarFallback className="text-lg">
-                      {selectedClient.firstName[0]}{selectedClient.lastName[0]}
+                      {selectedClient.firstName[0]}
+                      {selectedClient.lastName[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -547,14 +657,20 @@ export default function Clients() {
                 {selectedClient.preferredStylistId && (
                   <div>
                     <h4 className="font-semibold mb-2">Styliste préféré</h4>
-                    <p>{getPreferredStylistName(selectedClient.preferredStylistId)}</p>
+                    <p>
+                      {getPreferredStylistName(
+                        selectedClient.preferredStylistId,
+                      )}
+                    </p>
                   </div>
                 )}
 
                 {selectedClient.notes && (
                   <div>
                     <h4 className="font-semibold mb-2">Notes</h4>
-                    <p className="text-muted-foreground">{selectedClient.notes}</p>
+                    <p className="text-muted-foreground">
+                      {selectedClient.notes}
+                    </p>
                   </div>
                 )}
 
@@ -564,23 +680,36 @@ export default function Clients() {
                     Historique des rendez-vous
                   </h4>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {getClientAppointments(selectedClient.id).map((appointment: Appointment) => (
-                      <div key={appointment.id} className="border rounded-lg p-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium">
-                              {format(parseISO(appointment.startTime), "EEEE d MMMM yyyy à HH:mm", { locale: fr })}
+                    {getClientAppointments(selectedClient.id).map(
+                      (appointment: Appointment) => (
+                        <div
+                          key={appointment.id}
+                          className="border rounded-lg p-3"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-medium">
+                                {format(
+                                  parseISO(appointment.startTime),
+                                  "EEEE d MMMM yyyy à HH:mm",
+                                  { locale: fr },
+                                )}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                Service: Service #{appointment.serviceId} •
+                                Styliste: {appointment.stylistId}
+                              </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              Service: Service #{appointment.serviceId} • Styliste: {appointment.stylistId}
-                            </div>
+                            <Badge
+                              variant="outline"
+                              className={getStatusColor(appointment.status)}
+                            >
+                              {appointment.status}
+                            </Badge>
                           </div>
-                          <Badge variant="outline" className={getStatusColor(appointment.status)}>
-                            {appointment.status}
-                          </Badge>
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                     {getClientAppointments(selectedClient.id).length === 0 && (
                       <p className="text-center text-muted-foreground py-4">
                         Aucun rendez-vous dans l'historique
@@ -590,7 +719,7 @@ export default function Clients() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button 
+                  <Button
                     onClick={() => setIsDetailsDialogOpen(false)}
                     data-testid="button-close-client-details"
                   >
