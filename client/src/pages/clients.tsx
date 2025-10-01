@@ -5,9 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -78,7 +77,6 @@ export default function Clients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -93,11 +91,7 @@ export default function Clients() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: salon } = useQuery({
-    queryKey: ["/api/salon"],
-    retry: false,
-  });
-
+  const { data: salon } = useQuery({ queryKey: ["/api/salon"], retry: false });
   const { data: clients, isLoading: clientsLoading } = useQuery({
     queryKey: ["/api/clients"],
     retry: false,
@@ -148,9 +142,7 @@ export default function Clients() {
           description: "Vous devez être connecté. Redirection...",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
+        setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
       toast({
@@ -189,9 +181,7 @@ export default function Clients() {
           description: "Vous devez être connecté. Redirection...",
           variant: "destructive",
         });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
+        setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
       toast({
@@ -210,7 +200,7 @@ export default function Clients() {
       email: client.email,
       phone: client.phone || "",
       notes: client.notes || "",
-      preferredStylistId: client.preferredStylistId || "",
+      preferredStylistId: client.preferredStylistId || "none",
     });
     setIsDialogOpen(true);
   };
@@ -221,11 +211,13 @@ export default function Clients() {
   };
 
   const onSubmit = (data: ClientFormData) => {
-    const cleanedData = {
+    const cleanedData: ClientFormData = {
       ...data,
+      // important : normaliser l’absence de styliste
+      // "" ou "none" => null côté API/DB
       preferredStylistId:
         !data.preferredStylistId || data.preferredStylistId === "none"
-          ? null
+          ? (null as unknown as any)
           : data.preferredStylistId,
     };
 
@@ -260,7 +252,7 @@ export default function Clients() {
     );
   };
 
-  const getPreferredStylistName = (stylistId?: string) => {
+  const getPreferredStylistName = (stylistId?: string | null) => {
     if (!stylistId) return null;
     const stylist = stylists?.find((s: Stylist) => s.id === stylistId);
     return stylist ? `${stylist.firstName} ${stylist.lastName}` : null;
@@ -273,10 +265,7 @@ export default function Clients() {
       </div>
     );
   }
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -306,6 +295,7 @@ export default function Clients() {
                 Ajouter un client
               </Button>
             </DialogTrigger>
+
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
@@ -336,7 +326,6 @@ export default function Clients() {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="lastName"
@@ -375,7 +364,6 @@ export default function Clients() {
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
                       name="phone"
@@ -403,7 +391,7 @@ export default function Clients() {
                         <FormLabel>Styliste préféré (optionnel)</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value ?? "none"}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="select-preferred-stylist">
@@ -473,7 +461,7 @@ export default function Clients() {
           </Dialog>
         </div>
 
-        {/* Search Bar */}
+        {/* Barre de recherche */}
         <Card className="glassmorphism-card mb-6">
           <CardContent className="pt-6">
             <div className="relative">
@@ -525,7 +513,6 @@ export default function Clients() {
                         client.id,
                       );
                       const lastAppointment = clientAppointments[0];
-
                       return (
                         <TableRow key={client.id}>
                           <TableCell>
@@ -616,7 +603,7 @@ export default function Clients() {
           </Card>
         )}
 
-        {/* Client Details Dialog */}
+        {/* Détails client */}
         <Dialog
           open={isDetailsDialogOpen}
           onOpenChange={setIsDetailsDialogOpen}
@@ -733,4 +720,16 @@ export default function Clients() {
       </div>
     </div>
   );
+}
+
+/** util locale pour le badge statut (même logique qu’avant) */
+function getStatusColor(status: string) {
+  switch (status) {
+    case "confirmed":
+      return "bg-green-100 text-green-700";
+    case "cancelled":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-muted";
+  }
 }
