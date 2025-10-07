@@ -1,20 +1,26 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  root: ".", // <-- Ajout ici, racine du projet Vite
+  root: "client",
   plugins: [react()],
-  server: {
-    host: "0.0.0.0", // nécessaire pour Replit
-    port: 5173, // par défaut
-    strictPort: false, // laisse Vite choisir un autre port si 5173 pris
-  },
-  preview: {
-    host: "0.0.0.0",
-    port: 4173,
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "client/src"),
+      "@shared": path.resolve(__dirname, "shared"), // ✅ ajout pour fixer l'import
+    },
   },
   build: {
-    outDir: "dist",
-    sourcemap: true,
+    outDir: "../dist",
+    emptyOutDir: true,
+  },
+  server: {
+    port: 5173,
+    strictPort: true,
   },
 });
